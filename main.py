@@ -41,6 +41,8 @@ def main():
     """
     Main entry point for the Git Repo Health Checker.
     """
+    start_time = time.time()
+
     # Get and validate repository path and options from CLI
     repo_path, options = get_repo_path_and_options()
 
