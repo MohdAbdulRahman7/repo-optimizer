@@ -29,27 +29,30 @@ def main():
         options = {'check_commits': True, 'check_security': True, 'check_language': True}
 
     # Analyze the repository
+    print(f"{'='*60}")
     print(f"📁 Analyzing repository: {repo_path}")
-    enabled_checks = []
+    print(f"{'='*60}")
+    print("🔧 CONFIGURATION:")
     if options['check_commits']:
-        enabled_checks.append("Commit Quality")
+        print("  ✅ Commit quality checks enabled")
     if options['check_security']:
-        enabled_checks.append("Security Scan")
+        print("  ✅ Security scan for secrets enabled")
     if options['check_language']:
-        enabled_checks.append("Language Checks")
-    if enabled_checks:
-        print(f"🔍 Enabled checks: {', '.join(enabled_checks)}")
-    print("⏳ Analyzing...\n")
+        print("  ✅ Code quality & language checks enabled")
+    print("\n⏳ ANALYSIS IN PROGRESS...\n")
 
     analysis_results = analyze_repository(repo_path, options)
 
     # Calculate health score
-    health_score = calculate_health_score(analysis_results, options)
+    health_score, score_breakdown = calculate_health_score(analysis_results, options)
     score_category = get_score_category(health_score)
 
     # Generate and print report
-    report = format_report(analysis_results, repo_path, health_score, score_category, options)
+    report = format_report(analysis_results, repo_path, health_score, score_category, options, score_breakdown)
     print_report(report)
+    print(f"{'='*60}")
+    print("✅ Analysis complete! Review the report above for insights.")
+    print(f"{'='*60}")
 
 
 if __name__ == '__main__':

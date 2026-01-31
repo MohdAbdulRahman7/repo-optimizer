@@ -139,9 +139,15 @@ Issues found in enabled checks apply penalties:
 ## Example Output
 
 ```
+============================================================
 📁 Analyzing repository: /path/to/my-repo
-🔍 Enabled checks: Commit Quality, Security Scan, Language Checks
-⏳ Analyzing...
+============================================================
+🔧 CONFIGURATION:
+  ✅ Commit quality checks enabled
+  ✅ Security scan for secrets enabled
+  ✅ Code quality & language checks enabled
+
+⏳ ANALYSIS IN PROGRESS...
 
 🔍 Analyzing repository structure...
 ✓ Repository structure analyzed
@@ -162,6 +168,15 @@ Issues found in enabled checks apply penalties:
   📊 HEALTH SCORE
 ----------------------------------------------------------------------
 Score: 40/100 (Poor)
+
+📊 SCORE BREAKDOWN:
+  Base Score: +60
+  Structure: +35
+  History: +25
+  Commit Quality: 0
+  Security: -20
+  Code Quality: -20
+  Language Specific: -10
 
 ----------------------------------------------------------------------
   📁 REPOSITORY STRUCTURE
@@ -200,6 +215,9 @@ Score: 40/100 (Poor)
     💡 Tip: Add test files in a 'tests/' directory or as 'test_*.py' files.
 
 ======================================================================
+============================================================
+✅ Analysis complete! Review the report above for insights.
+============================================================
 ```
 
 ## Error Handling

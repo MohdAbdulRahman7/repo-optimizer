@@ -8,7 +8,7 @@ from typing import Dict
 from utils import Colors, print_header, print_score, print_success, print_warning, print_error
 
 
-def format_report(analysis_results: Dict[str, any], repo_path: str, health_score: int, score_category: str, options: Dict[str, bool] = None) -> str:
+def format_report(analysis_results: Dict[str, any], repo_path: str, health_score: int, score_category: str, options: Dict[str, bool] = None, score_breakdown: dict = None) -> str:
     """
     Format analysis results into a readable terminal report.
 
@@ -55,6 +55,16 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
     }
     score_color = color_map.get(score_category, Colors.WHITE)
     report_lines.append(f"{score_color}{Colors.BOLD}Score: {health_score}/100 ({score_category}){Colors.RESET}")
+
+    # Score breakdown
+    if score_breakdown:
+        report_lines.append("")
+        report_lines.append(f"{Colors.CYAN}📊 SCORE BREAKDOWN:{Colors.RESET}")
+        for category, points in score_breakdown.items():
+            if category != 'final_score':
+                sign = "+" if points > 0 else ""
+                color = Colors.GREEN if points > 0 else (Colors.RED if points < 0 else Colors.WHITE)
+                report_lines.append(f"  {category.replace('_', ' ').title()}: {color}{sign}{points}{Colors.RESET}")
     report_lines.append("")
 
     # Repository Structure
