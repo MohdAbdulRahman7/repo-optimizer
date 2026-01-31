@@ -74,7 +74,16 @@ def calculate_health_score(analysis_results: Dict[str, any], options: Dict[str, 
 
     if options.get('check_language', False):
         language_warnings = language.get('language_warnings', [])
-        score -= min(len(language_warnings) * 10, 30)  # Up to 30 points penalty
+        # Separate penalties for different types
+        long_func_penalty = sum(1 for w in language_warnings if 'Long function' in w.get('message', ''))
+        circ_dep_penalty = sum(1 for w in language_warnings if 'Circular dependency' in w.get('message', ''))
+        entropy_penalty = sum(1 for w in language_warnings if 'High-entropy' in w.get('message', ''))
+        other_lang_penalty = len(language_warnings) - long_func_penalty - circ_dep_penalty - entropy_penalty
+
+        score -= min(long_func_penalty * 5, 20)  # Long functions: -5 per, max -20
+        score -= min(circ_dep_penalty * 15, 30)  # Circular deps: -15 per, max -30
+        score -= min(entropy_penalty * 20, 40)  # Entropy: -20 per, max -40
+        score -= min(other_lang_penalty * 10, 30)  # Others: -10 per, max -30
 
     return max(score, 0)  # Floor at 0
 

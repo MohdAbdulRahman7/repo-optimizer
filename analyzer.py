@@ -10,6 +10,9 @@ from typing import Dict, Optional
 
 from utils import file_exists, directory_exists, print_progress, print_success, print_warning
 import re
+import ast
+import math
+from collections import defaultdict, deque
 
 
 def analyze_repository_structure(repo_path: str) -> Dict[str, bool]:
@@ -234,6 +237,135 @@ def analyze_repository(repo_path: str, options: Dict[str, bool] = None) -> Dict[
     return results
 
 
+def check_long_functions(repo_path: str, language: str) -> list:
+    """Check for functions longer than 50 lines."""
+    warnings = []
+    if language != 'python':
+        return warnings
+
+    repo = Path(repo_path)
+    for py_file in repo.rglob('*.py'):
+        if py_file.is_file():
+            try:
+                with open(py_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                tree = ast.parse(content, filename=str(py_file))
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.FunctionDef):
+                        start_line = node.lineno
+                        end_line = node.end_lineno
+                        length = end_line - start_line + 1
+                        if length > 50:
+                            warnings.append({
+                                'message': f"Long function '{node.name}' in {py_file.relative_to(repo)}: {length} lines",
+                                'tip': "Break down long functions into smaller, more manageable pieces."
+                            })
+            except Exception:
+                pass  # Skip unparseable files
+    return warnings
+
+
+def check_circular_dependencies(repo_path: str, language: str) -> list:
+    """Check for circular import dependencies."""
+    warnings = []
+    if language != 'python':
+        return warnings
+
+    repo = Path(repo_path)
+    import_graph = defaultdict(list)
+
+    # Build import graph
+    for py_file in repo.rglob('*.py'):
+        if py_file.is_file():
+            module_name = '.'.join(py_file.relative_to(repo).parts)[:-3]  # Remove .py
+            try:
+                with open(py_file, 'r', encoding='utf-8') as f:
+                    tree = ast.parse(f.read(), filename=str(py_file))
+                imports = set()
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.Import):
+                        for alias in node.names:
+                            imports.add(alias.name.split('.')[0])
+                    elif isinstance(node, ast.ImportFrom):
+                        if node.module:
+                            imports.add(node.module.split('.')[0])
+                for imp in imports:
+                    if imp and imp != '__future__':
+                        import_graph[module_name].append(imp)
+            except Exception:
+                pass
+
+    # Detect cycles using DFS
+    visited = set()
+    rec_stack = set()
+
+    def has_cycle(node):
+        visited.add(node)
+        rec_stack.add(node)
+        for neighbor in import_graph.get(node, []):
+            if neighbor not in visited:
+                if has_cycle(neighbor):
+                    return True
+            elif neighbor in rec_stack:
+                return True
+        rec_stack.remove(node)
+        return False
+
+    for node in import_graph:
+        if node not in visited:
+            if has_cycle(node):
+                warnings.append({
+                    'message': f"Circular dependency detected involving module '{node}'",
+                    'tip': "Refactor to break circular imports, e.g., move shared code to a separate module."
+                })
+                break  # Report one cycle
+    return warnings
+
+
+def calculate_entropy(s: str) -> float:
+    """Calculate Shannon entropy of a string."""
+    if not s:
+        return 0
+    entropy = 0
+    length = len(s)
+    char_count = defaultdict(int)
+    for char in s:
+        char_count[char] += 1
+    for count in char_count.values():
+        p = count / length
+        entropy -= p * math.log2(p)
+    return entropy
+
+
+def check_high_entropy_strings(repo_path: str, language: str) -> list:
+    """Check for high-entropy strings that might be hardcoded credentials."""
+    warnings = []
+    if language != 'python':
+        return warnings
+
+    repo = Path(repo_path)
+    # Patterns for potential secrets (variable names)
+    secret_patterns = re.compile(r'\b(api_key|apikey|secret|token|password|pwd|key)\b\s*[:=]\s*["\']([^"\']+)["\']', re.IGNORECASE)
+
+    for py_file in repo.rglob('*.py'):
+        if py_file.is_file():
+            try:
+                with open(py_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                for match in secret_patterns.finditer(content):
+                    var_name, value = match.groups()
+                    if len(value) > 10:  # Only check longer strings
+                        entropy = calculate_entropy(value)
+                        if entropy > 4.5:  # High entropy threshold
+                            warnings.append({
+                                'message': f"High-entropy string detected in {py_file.relative_to(repo)}: variable '{var_name}'",
+                                'tip': "Replace hardcoded credentials with environment variables or secure storage."
+                            })
+            except Exception:
+                pass
+    return warnings
+
+
 def analyze_security(repo_path: str) -> Dict[str, any]:
     """
     Perform offline security scan for secrets.
@@ -350,6 +482,16 @@ def analyze_language_specific(repo_path: str) -> Dict[str, any]:
 
     language = detect_primary_language(repo_path)
     results['primary_language'] = language
+
+    # Code quality checks
+    long_func_warnings = check_long_functions(repo_path, language)
+    results['language_warnings'].extend(long_func_warnings)
+
+    circ_dep_warnings = check_circular_dependencies(repo_path, language)
+    results['language_warnings'].extend(circ_dep_warnings)
+
+    entropy_warnings = check_high_entropy_strings(repo_path, language)
+    results['language_warnings'].extend(entropy_warnings)
 
     if language == 'python':
         # Check for requirements.txt, pyproject.toml, setup.py, and tests

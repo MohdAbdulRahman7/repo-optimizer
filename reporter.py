@@ -153,7 +153,7 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
     # Language Specific (if enabled)
     if options.get('check_language', False):
         report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
-        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}  💻 LANGUAGE SPECIFIC{Colors.RESET}")
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}  💻 CODE QUALITY & LANGUAGE SPECIFIC{Colors.RESET}")
         report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
 
         primary_lang = language.get('primary_language', 'unknown')
@@ -168,7 +168,7 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
                 else:
                     report_lines.append(f"  {Colors.YELLOW}⚠{Colors.RESET} {warning}")
         else:
-            report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} Language-specific checks passed")
+            report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} Code quality and language-specific checks passed")
 
         report_lines.append("")
 

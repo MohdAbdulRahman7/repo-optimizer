@@ -22,6 +22,10 @@ A terminal-based tool that analyzes local git repositories and provides a health
   - Scans for potential secrets in .env files, config files
   - Checks for private keys
 
+- **Code Quality Checks** (optional)
+  - Detects long functions (>50 lines)
+  - Identifies circular dependencies
+  - Scans for high-entropy strings (potential hardcoded secrets)
 - **Language-Specific Checks** (optional)
   - Detects primary language (Python, JavaScript/TypeScript, Go)
   - Checks for relevant files (requirements.txt, package.json, go.mod, etc.)
@@ -118,6 +122,10 @@ Issues found in enabled checks apply penalties:
 
 - **Commit Quality**: -10 points per warning (up to -30)
 - **Security**: -20 points per warning (up to -50)
+- **Code Quality**:
+  - Long functions: -5 points per (up to -20)
+  - Circular dependencies: -15 points per (up to -30)
+  - High-entropy secrets: -20 points per (up to -40)
 - **Language Specific**: -10 points per warning (up to -30)
 
 ### Score Categories
@@ -212,6 +220,9 @@ The tool provides actionable tips for failed checks:
 - **Committed node_modules**: Add `node_modules/` to your `.gitignore`
 - **Secrets in Files**: Remove sensitive data or use environment variables
 - **Bad Commit Messages**: Use descriptive commit messages (e.g., "Fix bug in login validation")
+- **Long Functions**: Break down into smaller, focused functions
+- **Circular Dependencies**: Refactor to eliminate import cycles
+- **High-Entropy Strings**: Replace with secure credential management
 
 ## Limitations
 
