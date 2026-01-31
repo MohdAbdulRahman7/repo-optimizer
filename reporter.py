@@ -29,6 +29,7 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
     history = analysis_results.get('history', {})
     security = analysis_results.get('security', {})
     language = analysis_results.get('language', {})
+    code_quality = analysis_results.get('code_quality', {})
 
     report_lines = []
 
@@ -163,7 +164,7 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
     # Language Specific (if enabled)
     if options.get('check_language', False):
         report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
-        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}  💻 CODE QUALITY & LANGUAGE SPECIFIC{Colors.RESET}")
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}  💻 LANGUAGE SPECIFIC{Colors.RESET}")
         report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
 
         primary_lang = language.get('primary_language', 'unknown')
@@ -178,7 +179,24 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
                 else:
                     report_lines.append(f"  {Colors.YELLOW}⚠{Colors.RESET} {warning}")
         else:
-            report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} Code quality and language-specific checks passed")
+            report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} Language-specific checks passed")
+
+    # Code Quality (if enabled)
+    if options.get('check_code_quality', False):
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}  🔧 CODE QUALITY{Colors.RESET}")
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
+
+        code_quality_warnings = code_quality.get('code_quality_warnings', [])
+        if code_quality_warnings:
+            for warning in code_quality_warnings:
+                if isinstance(warning, dict):
+                    report_lines.append(f"  {Colors.YELLOW}⚠{Colors.RESET} {warning['message']}")
+                    report_lines.append(f"    💡 Tip: {warning['tip']}")
+                else:
+                    report_lines.append(f"  {Colors.YELLOW}⚠{Colors.RESET} {warning}")
+        else:
+            report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} Code quality checks passed")
 
         report_lines.append("")
 

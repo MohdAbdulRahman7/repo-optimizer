@@ -31,6 +31,11 @@ A terminal-based tool that analyzes local git repositories and provides a health
   - Checks for relevant files (requirements.txt, package.json, go.mod, etc.)
   - Provides resolution tips for failed checks
 
+- **Code Quality Checks** (optional)
+  - Detects long functions (>50 lines)
+  - Identifies circular dependencies using directed graph analysis
+  - Scans for high-entropy strings (potential hardcoded secrets)
+
 - **Health Score**
   - Calculates a score out of 100 based on all checks
   - Provides a category (Excellent, Good, Fair, Poor, Critical)
@@ -122,11 +127,11 @@ Issues found in enabled checks apply penalties:
 
 - **Commit Quality**: -10 points per warning (up to -30)
 - **Security**: -20 points per warning (up to -50)
+- **Language Specific**: -10 points per warning (up to -30)
 - **Code Quality**:
   - Long functions: -5 points per (up to -20)
   - Circular dependencies: -15 points per (up to -30)
   - High-entropy secrets: -20 points per (up to -40)
-- **Language Specific**: -10 points per warning (up to -30)
 
 ### Score Categories
 
@@ -145,7 +150,8 @@ Issues found in enabled checks apply penalties:
 🔧 CONFIGURATION:
   ✅ Commit quality checks enabled
   ✅ Security scan for secrets enabled
-  ✅ Code quality & language checks enabled
+  ✅ Language-specific checks enabled
+  ✅ Code quality checks enabled
 
 ⏳ ANALYSIS IN PROGRESS...
 
@@ -173,10 +179,10 @@ Score: 40/100 (Poor)
   Base Score: +60
   Structure: +35
   History: +25
-  Commit Quality: 0
-  Security: -20
-  Code Quality: -20
-  Language Specific: -10
+  Commit Quality: -30
+  Security: 0
+  Language Specific: -20
+  Code Quality: -25
 
 ----------------------------------------------------------------------
   📁 REPOSITORY STRUCTURE
@@ -213,6 +219,11 @@ Score: 40/100 (Poor)
     💡 Tip: Create a requirements.txt or pyproject.toml file to manage dependencies.
   ⚠ Python project missing tests
     💡 Tip: Add test files in a 'tests/' directory or as 'test_*.py' files.
+----------------------------------------------------------------------
+  🔧 CODE QUALITY
+----------------------------------------------------------------------
+  ⚠ Long function 'long_function' in test_long.py: 54 lines
+    💡 Tip: Break down long functions into smaller, more manageable pieces.
 
 ======================================================================
 ============================================================

@@ -28,6 +28,7 @@ Examples:
   %(prog)s --check-commits    # Run only commit quality checks
   %(prog)s --check-security   # Run only security scan
   %(prog)s --check-language   # Run only language-specific checks
+  %(prog)s --check-code-quality # Run only code quality checks
         """
     )
 
@@ -53,7 +54,13 @@ Examples:
     parser.add_argument(
         '--check-language',
         action='store_true',
-        help='Run only language-specific checks'
+        help='Run only language-specific checks (dependencies, etc.)'
+    )
+
+    parser.add_argument(
+        '--check-code-quality',
+        action='store_true',
+        help='Run only code quality checks (long functions, circular deps, entropy)'
     )
 
     return parser.parse_args()

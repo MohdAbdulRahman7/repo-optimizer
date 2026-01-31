@@ -26,7 +26,7 @@ def main():
 
     # If no specific checks specified, enable all
     if not any(options.values()):
-        options = {'check_commits': True, 'check_security': True, 'check_language': True}
+        options = {'check_commits': True, 'check_security': True, 'check_language': True, 'check_code_quality': True}
 
     # Analyze the repository
     print(f"{'='*60}")
@@ -38,7 +38,9 @@ def main():
     if options['check_security']:
         print("  ✅ Security scan for secrets enabled")
     if options['check_language']:
-        print("  ✅ Code quality & language checks enabled")
+        print("  ✅ Language-specific checks enabled")
+    if options['check_code_quality']:
+        print("  ✅ Code quality checks enabled")
     print("\n⏳ ANALYSIS IN PROGRESS...\n")
 
     analysis_results = analyze_repository(repo_path, options)

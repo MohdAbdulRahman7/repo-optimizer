@@ -22,8 +22,8 @@ def calculate_health_score(analysis_results: Dict[str, any], options: Dict[str, 
         'history': 0,
         'commit_quality': 0,
         'security': 0,
-        'code_quality': 0,
-        'language_specific': 0
+        'language_specific': 0,
+        'code_quality': 0
     }
 
     score = 0
@@ -81,21 +81,24 @@ def calculate_health_score(analysis_results: Dict[str, any], options: Dict[str, 
 
     if options.get('check_language', False):
         language_warnings = language.get('language_warnings', [])
+        other_lang_count = len(language_warnings)
+        other_penalty = min(other_lang_count * 10, 30)
+        breakdown['language_specific'] = -other_penalty
+        score -= other_penalty
+
+    if options.get('check_code_quality', False):
+        code_quality_warnings = analysis_results.get('code_quality', {}).get('code_quality_warnings', [])
         # Separate penalties for different types
-        long_func_count = sum(1 for w in language_warnings if 'Long function' in w.get('message', ''))
-        circ_dep_count = sum(1 for w in language_warnings if 'Circular dependency' in w.get('message', ''))
-        entropy_count = sum(1 for w in language_warnings if 'High-entropy' in w.get('message', ''))
-        other_lang_count = len(language_warnings) - long_func_count - circ_dep_count - entropy_count
+        long_func_count = sum(1 for w in code_quality_warnings if 'Long function' in w.get('message', ''))
+        circ_dep_count = sum(1 for w in code_quality_warnings if 'Circular dependency' in w.get('message', ''))
+        entropy_count = sum(1 for w in code_quality_warnings if 'High-entropy' in w.get('message', ''))
 
         long_penalty = min(long_func_count * 5, 20)
         circ_penalty = min(circ_dep_count * 15, 30)
         entropy_penalty = min(entropy_count * 20, 40)
-        other_penalty = min(other_lang_count * 10, 30)
 
         breakdown['code_quality'] = -(long_penalty + circ_penalty + entropy_penalty)
-        breakdown['language_specific'] = -other_penalty
-
-        score -= (long_penalty + circ_penalty + entropy_penalty + other_penalty)
+        score -= (long_penalty + circ_penalty + entropy_penalty)
 
     final_score = max(score, 0)
     breakdown['final_score'] = final_score

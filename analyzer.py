@@ -195,6 +195,35 @@ def analyze_git_history(repo_path: str, options: Dict[str, bool] = None) -> Dict
     return results
 
 
+def analyze_code_quality(repo_path: str) -> Dict[str, any]:
+    """
+    Analyze code quality (long functions, circular deps, entropy).
+
+    Args:
+        repo_path: Path to the repository
+
+    Returns:
+        Dictionary with code quality analysis results
+    """
+    results = {
+        'code_quality_warnings': [],
+    }
+
+    language = detect_primary_language(repo_path)
+
+    # Code quality checks
+    long_func_warnings = check_long_functions(repo_path, language)
+    results['code_quality_warnings'].extend(long_func_warnings)
+
+    circ_dep_warnings = check_circular_dependencies(repo_path, language)
+    results['code_quality_warnings'].extend(circ_dep_warnings)
+
+    entropy_warnings = check_high_entropy_strings(repo_path, language)
+    results['code_quality_warnings'].extend(entropy_warnings)
+
+    return results
+
+
 def analyze_repository(repo_path: str, options: Dict[str, bool] = None) -> Dict[str, any]:
     """
     Perform complete repository analysis.
@@ -230,9 +259,15 @@ def analyze_repository(repo_path: str, options: Dict[str, bool] = None) -> Dict[
 
     if options.get('check_language', False):
         print_progress("💻 Analyzing language-specific requirements...", "")
-        language = analyze_language_specific(repo_path)
+        language = analyze_language_checks(repo_path)
         results['language'] = language
         print_success("Language analysis completed")
+
+    if options.get('check_code_quality', False):
+        print_progress("🔧 Analyzing code quality...", "")
+        code_quality = analyze_code_quality(repo_path)
+        results['code_quality'] = code_quality
+        print_success("Code quality analysis completed")
 
     return results
 
@@ -266,7 +301,7 @@ def check_long_functions(repo_path: str, language: str) -> list:
 
 
 def check_circular_dependencies(repo_path: str, language: str) -> list:
-    """Check for circular import dependencies."""
+    """Check for circular import dependencies using directed graph."""
     warnings = []
     if language != 'python':
         return warnings
@@ -274,7 +309,7 @@ def check_circular_dependencies(repo_path: str, language: str) -> list:
     repo = Path(repo_path)
     import_graph = defaultdict(list)
 
-    # Build import graph
+    # Build directed import graph
     for py_file in repo.rglob('*.py'):
         if py_file.is_file():
             module_name = '.'.join(py_file.relative_to(repo).parts)[:-3]  # Remove .py
@@ -295,30 +330,40 @@ def check_circular_dependencies(repo_path: str, language: str) -> list:
             except Exception:
                 pass
 
-    # Detect cycles using DFS
+    # Detect cycles using DFS on directed graph
     visited = set()
     rec_stack = set()
+    cycle_found = False
 
-    def has_cycle(node):
+    def has_cycle(node, path):
+        nonlocal cycle_found
         visited.add(node)
         rec_stack.add(node)
+        path.append(node)
         for neighbor in import_graph.get(node, []):
             if neighbor not in visited:
-                if has_cycle(neighbor):
+                if has_cycle(neighbor, path):
                     return True
             elif neighbor in rec_stack:
+                # Cycle found
+                cycle_start = path.index(neighbor)
+                cycle = path[cycle_start:] + [neighbor]
+                warnings.append({
+                    'message': f"Circular dependency detected: {' -> '.join(cycle)}",
+                    'tip': "Refactor to break circular imports, e.g., move shared code to a separate module or use dependency injection."
+                })
+                cycle_found = True
                 return True
+        path.pop()
         rec_stack.remove(node)
         return False
 
     for node in import_graph:
         if node not in visited:
-            if has_cycle(node):
-                warnings.append({
-                    'message': f"Circular dependency detected involving module '{node}'",
-                    'tip': "Refactor to break circular imports, e.g., move shared code to a separate module."
-                })
-                break  # Report one cycle
+            has_cycle(node, [])
+            if cycle_found:
+                break  # Report one cycle for simplicity
+
     return warnings
 
 
@@ -465,9 +510,9 @@ def detect_primary_language(repo_path: str) -> str:
     return 'unknown'
 
 
-def analyze_language_specific(repo_path: str) -> Dict[str, any]:
+def analyze_language_checks(repo_path: str) -> Dict[str, any]:
     """
-    Analyze language-specific requirements.
+    Analyze language-specific requirements (dependencies, etc.).
 
     Args:
         repo_path: Path to the repository
@@ -482,16 +527,6 @@ def analyze_language_specific(repo_path: str) -> Dict[str, any]:
 
     language = detect_primary_language(repo_path)
     results['primary_language'] = language
-
-    # Code quality checks
-    long_func_warnings = check_long_functions(repo_path, language)
-    results['language_warnings'].extend(long_func_warnings)
-
-    circ_dep_warnings = check_circular_dependencies(repo_path, language)
-    results['language_warnings'].extend(circ_dep_warnings)
-
-    entropy_warnings = check_high_entropy_strings(repo_path, language)
-    results['language_warnings'].extend(entropy_warnings)
 
     if language == 'python':
         # Check for requirements.txt, pyproject.toml, setup.py, and tests
