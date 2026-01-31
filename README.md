@@ -44,7 +44,7 @@ No installation required! Just clone or download this repository.
 
 ### Basic Usage
 
-Analyze the current directory (if it's a git repository):
+Analyze the current directory with all checks enabled (if it's a git repository):
 ```bash
 python main.py
 ```
@@ -55,38 +55,38 @@ python main.py
 python main.py /path/to/repository
 ```
 
-### Optional Features
+### Selective Checks
 
-Enable additional checks with command-line flags:
+Run only specific checks with command-line flags:
 
 ```bash
-# Include commit quality checks
+# Run only commit quality checks
 python main.py --check-commits
 
-# Include security scan for secrets
+# Run only security scan for secrets
 python main.py --check-security
 
-# Include language-specific checks
+# Run only language-specific checks
 python main.py --check-language
 
 # Combine multiple checks
-python main.py --check-commits --check-security --check-language
+python main.py --check-commits --check-security
 ```
 
 ### Examples
 
 ```bash
-# Analyze current directory
+# Full analysis (all checks) of current directory
 python main.py
 
-# Analyze a specific repository
+# Full analysis of a specific repository
 python main.py ../my-project
 
-# Analyze with explicit current directory
+# Analyze with explicit current directory (all checks)
 python main.py .
 
-# Full analysis with all optional checks
-python main.py --check-commits --check-security --check-language /path/to/repo
+# Run only security scan on a repository
+python main.py --check-security /path/to/repo
 ```
 
 ## Project Structure
@@ -113,7 +113,7 @@ The health score is calculated out of 100 points:
 - **Git history** (at least 1 commit): 15 points
 - **Recent activity** (commit in last 6 months): 10 points
 
-Optional checks apply penalties for issues:
+Issues found in enabled checks apply penalties:
 
 - **Commit Quality**: -10 points per warning (up to -30)
 - **Security**: -20 points per warning (up to -50)
@@ -130,48 +130,60 @@ Optional checks apply penalties for issues:
 ## Example Output
 
 ```
+📁 Analyzing repository: /path/to/my-repo
+🔍 Enabled checks: Commit Quality, Security Scan, Language Checks
+⏳ Analyzing...
+
+🔍 Analyzing repository structure...
+✓ Repository structure analyzed
+📊 Analyzing git history...
+✓ Git history analyzed
+🔒 Scanning for security issues...
+✓ Security scan completed
+💻 Analyzing language-specific requirements...
+✓ Language analysis completed
 ======================================================================
-  Git Repository Health Checker
+  🏥 Git Repository Health Checker
 ======================================================================
 
-Repository: /path/to/my-repo
-Analysis Date: 2024-01-15 10:30:45
+📁 Repository: /path/to/my-repo
+📅 Analysis Date: 2024-01-15 10:30:45
 
 ----------------------------------------------------------------------
-  HEALTH SCORE
+  📊 HEALTH SCORE
 ----------------------------------------------------------------------
 Score: 85/100 (Good)
 
 ----------------------------------------------------------------------
-  REPOSITORY STRUCTURE
+  📁 REPOSITORY STRUCTURE
 ----------------------------------------------------------------------
-  [PASS] README.md
-  [PASS] LICENSE file
-  [PASS] Tests directory (tests/ or __tests__/)
-  [PASS] .gitignore
+  ✓ README.md
+  ✓ LICENSE file
+  ✓ Tests directory (tests/ or __tests__/)
+  ✓ .gitignore
 
 ----------------------------------------------------------------------
-  GIT HISTORY
+  📈 GIT HISTORY
 ----------------------------------------------------------------------
   Total Commits: 42
   Most Recent Commit: 2024-01-10 14:22:33
 
 ----------------------------------------------------------------------
-  COMMIT QUALITY
+  🔍 COMMIT QUALITY
 ----------------------------------------------------------------------
-  [PASS] No quality issues found in recent commits
+  ✓ No quality issues found in recent commits
 
 ----------------------------------------------------------------------
-  SECURITY SCAN
+  🔒 SECURITY SCAN
 ----------------------------------------------------------------------
-  Scanned Files: 2
-  [PASS] No potential secrets found
+  🔍 Scanned Files: 2
+  ✓ No potential secrets found
 
 ----------------------------------------------------------------------
-  LANGUAGE SPECIFIC
+  💻 LANGUAGE SPECIFIC
 ----------------------------------------------------------------------
-  Primary Language: Python
-  [PASS] Language-specific checks passed
+  🏷️  Primary Language: Python
+  ✓ Language-specific checks passed
 
 ======================================================================
 ```

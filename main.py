@@ -24,15 +24,22 @@ def main():
     # Get and validate repository path and options from CLI
     repo_path, options = get_repo_path_and_options()
 
+    # If no specific checks specified, enable all
+    if not any(options.values()):
+        options = {'check_commits': True, 'check_security': True, 'check_language': True}
+
     # Analyze the repository
-    print(f"Analyzing repository: {repo_path}")
+    print(f"📁 Analyzing repository: {repo_path}")
+    enabled_checks = []
     if options['check_commits']:
-        print("Enabled: Commit quality checks")
+        enabled_checks.append("Commit Quality")
     if options['check_security']:
-        print("Enabled: Security scan for secrets")
+        enabled_checks.append("Security Scan")
     if options['check_language']:
-        print("Enabled: Language-specific checks")
-    print("Please wait...\n")
+        enabled_checks.append("Language Checks")
+    if enabled_checks:
+        print(f"🔍 Enabled checks: {', '.join(enabled_checks)}")
+    print("⏳ Analyzing...\n")
 
     analysis_results = analyze_repository(repo_path, options)
 

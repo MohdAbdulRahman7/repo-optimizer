@@ -5,6 +5,7 @@ Formats analysis results into a readable terminal report.
 
 from datetime import datetime
 from typing import Dict
+from utils import Colors, print_header, print_score, print_success, print_warning, print_error
 
 
 def format_report(analysis_results: Dict[str, any], repo_path: str, health_score: int, score_category: str, options: Dict[str, bool] = None) -> str:
@@ -32,47 +33,65 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
     report_lines = []
 
     # Header
-    report_lines.append("=" * 70)
-    report_lines.append("  Git Repository Health Checker")
-    report_lines.append("=" * 70)
-    report_lines.append(f"\nRepository: {repo_path}")
-    report_lines.append(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    report_lines.append(f"{Colors.BOLD}{Colors.CYAN}{'=' * 70}{Colors.RESET}")
+    report_lines.append(f"{Colors.BOLD}{Colors.CYAN}  🏥 Git Repository Health Checker{Colors.RESET}")
+    report_lines.append(f"{Colors.BOLD}{Colors.CYAN}{'=' * 70}{Colors.RESET}")
+    report_lines.append(f"\n📁 Repository: {repo_path}")
+    report_lines.append(f"📅 Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     report_lines.append("")
 
     # Health Score
-    report_lines.append("-" * 70)
-    report_lines.append("  HEALTH SCORE")
-    report_lines.append("-" * 70)
-    report_lines.append(f"Score: {health_score}/100 ({score_category})")
+    report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
+    report_lines.append(f"{Colors.BOLD}{Colors.BLUE}  📊 HEALTH SCORE{Colors.RESET}")
+    report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
+
+    # Color the score based on category
+    color_map = {
+        "Excellent": Colors.GREEN,
+        "Good": Colors.GREEN,
+        "Fair": Colors.YELLOW,
+        "Poor": Colors.RED,
+        "Critical": Colors.RED
+    }
+    score_color = color_map.get(score_category, Colors.WHITE)
+    report_lines.append(f"{score_color}{Colors.BOLD}Score: {health_score}/100 ({score_category}){Colors.RESET}")
     report_lines.append("")
 
     # Repository Structure
-    report_lines.append("-" * 70)
-    report_lines.append("  REPOSITORY STRUCTURE")
-    report_lines.append("-" * 70)
+    report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
+    report_lines.append(f"{Colors.BOLD}{Colors.BLUE}  📁 REPOSITORY STRUCTURE{Colors.RESET}")
+    report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
 
     # README
-    readme_status = "[PASS]" if structure.get('has_readme', False) else "[FAIL]"
-    report_lines.append(f"  {readme_status} README.md")
+    if structure.get('has_readme', False):
+        report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} README.md")
+    else:
+        report_lines.append(f"  {Colors.RED}✗{Colors.RESET} README.md")
 
     # LICENSE
-    license_status = "[PASS]" if structure.get('has_license', False) else "[FAIL]"
-    report_lines.append(f"  {license_status} LICENSE file")
+    if structure.get('has_license', False):
+        report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} LICENSE file")
+    else:
+        report_lines.append(f"  {Colors.RED}✗{Colors.RESET} LICENSE file")
 
     # Tests
-    tests_status = "[PASS]" if structure.get('has_tests', False) else "[FAIL]"
-    report_lines.append(f"  {tests_status} Tests directory (tests/ or __tests__/)")
+    if structure.get('has_tests', False):
+        report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} Tests directory (tests/ or __tests__/)")
+    else:
+        report_lines.append(f"  {Colors.RED}✗{Colors.RESET} Tests directory (tests/ or __tests__/)")
 
     # .gitignore
-    gitignore_status = "[PASS]" if structure.get('has_gitignore', False) else "[FAIL]"
-    report_lines.append(f"  {gitignore_status} .gitignore")
+    if structure.get('has_gitignore', False):
+        report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} .gitignore")
+    else:
+        report_lines.append(f"  {Colors.RED}✗{Colors.RESET} .gitignore")
 
     report_lines.append("")
 
     # Git History
-    report_lines.append("-" * 70)
-    report_lines.append("  GIT HISTORY")
-    report_lines.append("-" * 70)
+    report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
+    report_lines.append(f"{Colors.BOLD}{Colors.BLUE}  📈 GIT HISTORY{Colors.RESET}")
+    report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
 
     total_commits = history.get('total_commits', 0)
     report_lines.append(f"  Total Commits: {total_commits}")
@@ -88,57 +107,57 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
 
     # Commit Quality (if enabled)
     if options.get('check_commits', False):
-        report_lines.append("-" * 70)
-        report_lines.append("  COMMIT QUALITY")
-        report_lines.append("-" * 70)
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}  🔍 COMMIT QUALITY{Colors.RESET}")
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
 
         commit_warnings = history.get('commits_quality_warnings', [])
         if commit_warnings:
             for warning in commit_warnings:
-                report_lines.append(f"  [WARN] {warning}")
+                report_lines.append(f"  {Colors.YELLOW}⚠{Colors.RESET} {warning}")
         else:
-            report_lines.append("  [PASS] No quality issues found in recent commits")
+            report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} No quality issues found in recent commits")
 
         report_lines.append("")
 
     # Security (if enabled)
     if options.get('check_security', False):
-        report_lines.append("-" * 70)
-        report_lines.append("  SECURITY SCAN")
-        report_lines.append("-" * 70)
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}  🔒 SECURITY SCAN{Colors.RESET}")
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
 
         secrets_warnings = security.get('secrets_warnings', [])
         scanned_files = security.get('scanned_files', 0)
-        report_lines.append(f"  Scanned Files: {scanned_files}")
+        report_lines.append(f"  🔍 Scanned Files: {scanned_files}")
 
         if secrets_warnings:
             for warning in secrets_warnings:
-                report_lines.append(f"  [WARN] {warning}")
+                report_lines.append(f"  {Colors.RED}⚠{Colors.RESET} {warning}")
         else:
-            report_lines.append("  [PASS] No potential secrets found")
+            report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} No potential secrets found")
 
         report_lines.append("")
 
     # Language Specific (if enabled)
     if options.get('check_language', False):
-        report_lines.append("-" * 70)
-        report_lines.append("  LANGUAGE SPECIFIC")
-        report_lines.append("-" * 70)
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}  💻 LANGUAGE SPECIFIC{Colors.RESET}")
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
 
         primary_lang = language.get('primary_language', 'unknown')
-        report_lines.append(f"  Primary Language: {primary_lang.capitalize()}")
+        report_lines.append(f"  🏷️  Primary Language: {primary_lang.capitalize()}")
 
         language_warnings = language.get('language_warnings', [])
         if language_warnings:
             for warning in language_warnings:
-                report_lines.append(f"  [WARN] {warning}")
+                report_lines.append(f"  {Colors.YELLOW}⚠{Colors.RESET} {warning}")
         else:
-            report_lines.append("  [PASS] Language-specific checks passed")
+            report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} Language-specific checks passed")
 
         report_lines.append("")
 
     # Footer
-    report_lines.append("=" * 70)
+    report_lines.append(f"{Colors.BOLD}{Colors.CYAN}{'=' * 70}{Colors.RESET}")
 
     return "\n".join(report_lines)
 

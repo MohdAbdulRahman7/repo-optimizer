@@ -4,7 +4,62 @@ Provides helper functions for validation and file operations.
 """
 
 import os
+import sys
 from pathlib import Path
+
+
+# ANSI color codes
+class Colors:
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+    RED = '\033[31m'
+    GREEN = '\033[32m'
+    YELLOW = '\033[33m'
+    BLUE = '\033[34m'
+    MAGENTA = '\033[35m'
+    CYAN = '\033[36m'
+    WHITE = '\033[37m'
+
+
+def print_progress(message: str, status: str = "", color: str = Colors.BLUE):
+    """Print a progress message with optional status and color."""
+    if status:
+        print(f"{color}{message} {status}{Colors.RESET}")
+    else:
+        print(f"{color}{message}{Colors.RESET}")
+
+
+def print_success(message: str):
+    """Print a success message."""
+    print(f"{Colors.GREEN}✓ {message}{Colors.RESET}")
+
+
+def print_warning(message: str):
+    """Print a warning message."""
+    print(f"{Colors.YELLOW}⚠ {message}{Colors.RESET}")
+
+
+def print_error(message: str):
+    """Print an error message."""
+    print(f"{Colors.RED}✗ {message}{Colors.RESET}")
+
+
+def print_header(message: str):
+    """Print a header message."""
+    print(f"{Colors.BOLD}{Colors.CYAN}{message}{Colors.RESET}")
+
+
+def print_score(score: int, category: str):
+    """Print the health score with color based on category."""
+    color_map = {
+        "Excellent": Colors.GREEN,
+        "Good": Colors.GREEN,
+        "Fair": Colors.YELLOW,
+        "Poor": Colors.RED,
+        "Critical": Colors.RED
+    }
+    color = color_map.get(category, Colors.WHITE)
+    print(f"{color}{Colors.BOLD}Score: {score}/100 ({category}){Colors.RESET}")
 
 
 def is_git_repository(repo_path: str) -> bool:

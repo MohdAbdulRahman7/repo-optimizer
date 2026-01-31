@@ -22,12 +22,12 @@ def parse_arguments() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s                    # Analyze current directory
-  %(prog)s /path/to/repo      # Analyze specific repository
-  %(prog)s .                  # Analyze current directory (explicit)
-  %(prog)s --check-commits    # Include commit quality checks
-  %(prog)s --check-security   # Include offline security scan
-  %(prog)s --check-language   # Include language-specific checks
+  %(prog)s                    # Analyze current directory (all checks)
+  %(prog)s /path/to/repo      # Analyze specific repository (all checks)
+  %(prog)s .                  # Analyze current directory (explicit, all checks)
+  %(prog)s --check-commits    # Run only commit quality checks
+  %(prog)s --check-security   # Run only security scan
+  %(prog)s --check-language   # Run only language-specific checks
         """
     )
 
@@ -41,19 +41,19 @@ Examples:
     parser.add_argument(
         '--check-commits',
         action='store_true',
-        help='Enable commit quality checks (recent activity and bad commit messages)'
+        help='Run only commit quality checks'
     )
 
     parser.add_argument(
         '--check-security',
         action='store_true',
-        help='Enable offline security scan for secrets (.env files, API keys, etc.)'
+        help='Run only offline security scan for secrets'
     )
 
     parser.add_argument(
         '--check-language',
         action='store_true',
-        help='Enable language-specific checks based on detected primary language'
+        help='Run only language-specific checks'
     )
 
     return parser.parse_args()

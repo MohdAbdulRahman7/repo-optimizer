@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
 
-from utils import file_exists, directory_exists
+from utils import file_exists, directory_exists, print_progress, print_success, print_warning
 import re
 
 
@@ -193,8 +193,13 @@ def analyze_repository(repo_path: str, options: Dict[str, bool] = None) -> Dict[
     if options is None:
         options = {}
 
+    print_progress("🔍 Analyzing repository structure...", "")
     structure = analyze_repository_structure(repo_path)
+    print_success("Repository structure analyzed")
+
+    print_progress("📊 Analyzing git history...", "")
     history = analyze_git_history(repo_path, options)
+    print_success("Git history analyzed")
 
     results = {
         'structure': structure,
@@ -202,12 +207,16 @@ def analyze_repository(repo_path: str, options: Dict[str, bool] = None) -> Dict[
     }
 
     if options.get('check_security', False):
+        print_progress("🔒 Scanning for security issues...", "")
         security = analyze_security(repo_path)
         results['security'] = security
+        print_success("Security scan completed")
 
     if options.get('check_language', False):
+        print_progress("💻 Analyzing language-specific requirements...", "")
         language = analyze_language_specific(repo_path)
         results['language'] = language
+        print_success("Language analysis completed")
 
     return results
 
