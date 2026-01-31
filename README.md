@@ -14,6 +14,18 @@ A terminal-based tool that analyzes local git repositories and provides a health
   - Total commit count
   - Date of most recent commit
 
+- **Commit Quality Checks** (optional)
+  - Analyzes recent commits for bad messages (e.g., "wip", very short)
+  - Checks for recent activity
+
+- **Security Scan** (optional)
+  - Scans for potential secrets in .env files, config files
+  - Checks for private keys
+
+- **Language-Specific Checks** (optional)
+  - Detects primary language (Python, JavaScript/TypeScript, Go)
+  - Checks for relevant files (requirements.txt, package.json, go.mod, etc.)
+
 - **Health Score**
   - Calculates a score out of 100 based on all checks
   - Provides a category (Excellent, Good, Fair, Poor, Critical)
@@ -43,6 +55,24 @@ python main.py
 python main.py /path/to/repository
 ```
 
+### Optional Features
+
+Enable additional checks with command-line flags:
+
+```bash
+# Include commit quality checks
+python main.py --check-commits
+
+# Include security scan for secrets
+python main.py --check-security
+
+# Include language-specific checks
+python main.py --check-language
+
+# Combine multiple checks
+python main.py --check-commits --check-security --check-language
+```
+
 ### Examples
 
 ```bash
@@ -54,6 +84,9 @@ python main.py ../my-project
 
 # Analyze with explicit current directory
 python main.py .
+
+# Full analysis with all optional checks
+python main.py --check-commits --check-security --check-language /path/to/repo
 ```
 
 ## Project Structure
@@ -79,6 +112,12 @@ The health score is calculated out of 100 points:
 - **.gitignore**: 15 points
 - **Git history** (at least 1 commit): 15 points
 - **Recent activity** (commit in last 6 months): 10 points
+
+Optional checks apply penalties for issues:
+
+- **Commit Quality**: -10 points per warning (up to -30)
+- **Security**: -20 points per warning (up to -50)
+- **Language Specific**: -10 points per warning (up to -30)
 
 ### Score Categories
 
@@ -106,16 +145,33 @@ Score: 85/100 (Good)
 ----------------------------------------------------------------------
   REPOSITORY STRUCTURE
 ----------------------------------------------------------------------
-  ✓ README.md
-  ✓ LICENSE file
-  ✓ Tests directory (tests/ or __tests__/)
-  ✓ .gitignore
+  [PASS] README.md
+  [PASS] LICENSE file
+  [PASS] Tests directory (tests/ or __tests__/)
+  [PASS] .gitignore
 
 ----------------------------------------------------------------------
   GIT HISTORY
 ----------------------------------------------------------------------
   Total Commits: 42
   Most Recent Commit: 2024-01-10 14:22:33
+
+----------------------------------------------------------------------
+  COMMIT QUALITY
+----------------------------------------------------------------------
+  [PASS] No quality issues found in recent commits
+
+----------------------------------------------------------------------
+  SECURITY SCAN
+----------------------------------------------------------------------
+  Scanned Files: 2
+  [PASS] No potential secrets found
+
+----------------------------------------------------------------------
+  LANGUAGE SPECIFIC
+----------------------------------------------------------------------
+  Primary Language: Python
+  [PASS] Language-specific checks passed
 
 ======================================================================
 ```
@@ -135,15 +191,17 @@ If git history cannot be analyzed (e.g., empty repository), the tool will still 
 - Tests directory check only looks for `tests/` or `__tests__/` in the root
 - LICENSE check is case-insensitive but only checks common variations
 - Requires git to be installed and accessible
+- Security scan is basic and may have false positives/negatives
+- Language detection based on file extensions only
 
 ## Future Enhancements
 
 Potential features for future versions:
 - CI/CD configuration detection
-- Security scanning
-- Language-specific analysis
 - Dependency analysis
 - Code quality metrics
+- More language support
+- Custom configuration files
 
 ## License
 
