@@ -60,6 +60,8 @@ def get_args() -> argparse.Namespace:
     """
     Get and validate command-line arguments.
 
+    If no specific checks are enabled, enable all checks by default.
+
     Returns:
         Parsed and validated arguments namespace
 
@@ -67,6 +69,12 @@ def get_args() -> argparse.Namespace:
         SystemExit: If validation fails
     """
     args = parse_arguments()
+
+    # If no flags specified, enable all checks
+    if not (args.check_commits or args.check_security or args.check_language):
+        args.check_commits = True
+        args.check_security = True
+        args.check_language = True
 
     try:
         args.repo_path = validate_repo_path(args.repo_path)

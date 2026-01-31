@@ -24,9 +24,16 @@ def main():
     # Get and validate arguments from CLI
     args = get_args()
     repo_path = args.repo_path
-    
-    # Analyze the repository
-    print(f"Analyzing repository: {repo_path}")
+
+    # Show progress
+    print(f"🔍 Analyzing repository: {repo_path}")
+    print("Running checks:")
+    if args.check_commits:
+        print("  • Commit quality checks")
+    if args.check_security:
+        print("  • Security scan")
+    if args.check_language:
+        print("  • Language-specific checks")
     print("Please wait...\n")
     
     analysis_results = analyze_repository(repo_path, args)

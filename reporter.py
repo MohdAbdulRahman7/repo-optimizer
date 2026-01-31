@@ -6,6 +6,18 @@ Formats analysis results into a readable terminal report.
 from datetime import datetime
 from typing import Dict
 
+# ANSI color codes
+GREEN = '\033[92m'
+RED = '\033[91m'
+YELLOW = '\033[93m'
+BLUE = '\033[94m'
+RESET = '\033[0m'
+
+# Icons
+PASS_ICON = '✓'
+FAIL_ICON = '✗'
+WARN_ICON = '⚠'
+
 
 def format_report(analysis_results: Dict[str, any], repo_path: str, health_score: int, score_category: str, args) -> str:
     """
@@ -37,28 +49,44 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
     report_lines.append("-" * 70)
     report_lines.append("  HEALTH SCORE")
     report_lines.append("-" * 70)
-    report_lines.append(f"Score: {health_score}/100 ({score_category})")
+
+    # Color the score based on category
+    if score_category == "Excellent":
+        score_color = GREEN
+    elif score_category == "Good":
+        score_color = BLUE
+    elif score_category == "Fair":
+        score_color = YELLOW
+    else:
+        score_color = RED
+
+    report_lines.append(f"Score: {score_color}{health_score}/100 ({score_category}){RESET}")
+
+    # Progress bar
+    filled = health_score // 10
+    bar = '█' * filled + '░' * (10 - filled)
+    report_lines.append(f"[{bar}] {health_score}%")
     report_lines.append("")
     
     # Repository Structure
     report_lines.append("-" * 70)
     report_lines.append("  REPOSITORY STRUCTURE")
     report_lines.append("-" * 70)
-    
+
     # README
-    readme_status = "[PASS]" if structure.get('has_readme', False) else "[FAIL]"
+    readme_status = f"{GREEN}{PASS_ICON} [PASS]{RESET}" if structure.get('has_readme', False) else f"{RED}{FAIL_ICON} [FAIL]{RESET}"
     report_lines.append(f"  {readme_status} README.md")
-    
+
     # LICENSE
-    license_status = "[PASS]" if structure.get('has_license', False) else "[FAIL]"
+    license_status = f"{GREEN}{PASS_ICON} [PASS]{RESET}" if structure.get('has_license', False) else f"{RED}{FAIL_ICON} [FAIL]{RESET}"
     report_lines.append(f"  {license_status} LICENSE file")
-    
+
     # Tests
-    tests_status = "[PASS]" if structure.get('has_tests', False) else "[FAIL]"
+    tests_status = f"{GREEN}{PASS_ICON} [PASS]{RESET}" if structure.get('has_tests', False) else f"{RED}{FAIL_ICON} [FAIL]{RESET}"
     report_lines.append(f"  {tests_status} Tests directory (tests/ or __tests__/)")
-    
+
     # .gitignore
-    gitignore_status = "[PASS]" if structure.get('has_gitignore', False) else "[FAIL]"
+    gitignore_status = f"{GREEN}{PASS_ICON} [PASS]{RESET}" if structure.get('has_gitignore', False) else f"{RED}{FAIL_ICON} [FAIL]{RESET}"
     report_lines.append(f"  {gitignore_status} .gitignore")
     
     report_lines.append("")
@@ -84,7 +112,7 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
         report_lines.append(f"  Bad Commit Messages (wip-like): {bad_messages}")
         report_lines.append(f"  Very Short Commits (<10 chars): {short_commits}")
         if bad_messages > 0 or short_commits > 0:
-            report_lines.append("  WARNING: Poor commit quality detected!")
+            report_lines.append(f"  {YELLOW}⚠ WARNING: Poor commit quality detected!{RESET}")
 
     report_lines.append("")
 
@@ -96,14 +124,14 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
         report_lines.append("-" * 70)
 
         has_env = security.get('has_env_files', False)
-        env_status = "[WARN]" if has_env else "[OK]"
+        env_status = f"{YELLOW}{WARN_ICON} [WARN]{RESET}" if has_env else f"{GREEN}{PASS_ICON} [OK]{RESET}"
         report_lines.append(f"  {env_status} .env files present: {has_env}")
 
         secrets = security.get('potential_secrets', [])
-        secrets_status = "[WARN]" if secrets else "[OK]"
+        secrets_status = f"{YELLOW}{WARN_ICON} [WARN]{RESET}" if secrets else f"{GREEN}{PASS_ICON} [OK]{RESET}"
         report_lines.append(f"  {secrets_status} Potential secrets found: {len(secrets)}")
         if secrets:
-            report_lines.append("  WARNING: Potential secrets detected in code!")
+            report_lines.append(f"  {YELLOW}⚠ WARNING: Potential secrets detected in code!{RESET}")
             for secret in secrets[:5]:  # Show first 5
                 report_lines.append(f"    {secret}")
             if len(secrets) > 5:
@@ -122,23 +150,30 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
 
         lang_checks = language.get('language_checks', {})
         if primary_lang == 'Python':
-            req_status = "[PASS]" if lang_checks.get('has_requirements', False) or lang_checks.get('has_pyproject', False) else "[FAIL]"
+            req_bool = lang_checks.get('has_requirements', False) or lang_checks.get('has_pyproject', False)
+            req_status = f"{GREEN}{PASS_ICON} [PASS]{RESET}" if req_bool else f"{RED}{FAIL_ICON} [FAIL]{RESET}"
             report_lines.append(f"  {req_status} Dependencies file (requirements.txt/pyproject.toml)")
-            test_status = "[PASS]" if lang_checks.get('has_tests', False) else "[FAIL]"
+            test_bool = lang_checks.get('has_tests', False)
+            test_status = f"{GREEN}{PASS_ICON} [PASS]{RESET}" if test_bool else f"{RED}{FAIL_ICON} [FAIL]{RESET}"
             report_lines.append(f"  {test_status} Tests directory")
         elif primary_lang == 'JavaScript/TypeScript':
-            pkg_status = "[PASS]" if lang_checks.get('has_package_json', False) else "[FAIL]"
+            pkg_bool = lang_checks.get('has_package_json', False)
+            pkg_status = f"{GREEN}{PASS_ICON} [PASS]{RESET}" if pkg_bool else f"{RED}{FAIL_ICON} [FAIL]{RESET}"
             report_lines.append(f"  {pkg_status} package.json")
-            script_status = "[PASS]" if lang_checks.get('has_scripts_in_package', False) else "[FAIL]"
+            script_bool = lang_checks.get('has_scripts_in_package', False)
+            script_status = f"{GREEN}{PASS_ICON} [PASS]{RESET}" if script_bool else f"{RED}{FAIL_ICON} [FAIL]{RESET}"
             report_lines.append(f"  {script_status} Scripts in package.json")
-            node_status = "[FAIL]" if lang_checks.get('node_modules_committed', False) else "[PASS]"
+            node_bool = not lang_checks.get('node_modules_committed', False)
+            node_status = f"{GREEN}{PASS_ICON} [PASS]{RESET}" if node_bool else f"{RED}{FAIL_ICON} [FAIL]{RESET}"
             report_lines.append(f"  {node_status} node_modules not committed")
             if lang_checks.get('node_modules_committed', False):
-                report_lines.append("  WARNING: node_modules should not be committed!")
+                report_lines.append(f"  {YELLOW}⚠ WARNING: node_modules should not be committed!{RESET}")
         elif primary_lang == 'Go':
-            mod_status = "[PASS]" if lang_checks.get('has_go_mod', False) else "[FAIL]"
+            mod_bool = lang_checks.get('has_go_mod', False)
+            mod_status = f"{GREEN}{PASS_ICON} [PASS]{RESET}" if mod_bool else f"{RED}{FAIL_ICON} [FAIL]{RESET}"
             report_lines.append(f"  {mod_status} go.mod")
-            sum_status = "[PASS]" if lang_checks.get('has_go_sum', False) else "[FAIL]"
+            sum_bool = lang_checks.get('has_go_sum', False)
+            sum_status = f"{GREEN}{PASS_ICON} [PASS]{RESET}" if sum_bool else f"{RED}{FAIL_ICON} [FAIL]{RESET}"
             report_lines.append(f"  {sum_status} go.sum")
 
         report_lines.append("")
