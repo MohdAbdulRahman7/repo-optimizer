@@ -67,24 +67,28 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
         report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} README.md")
     else:
         report_lines.append(f"  {Colors.RED}✗{Colors.RESET} README.md")
+        report_lines.append("    💡 Tip: Create a README.md file describing your project.")
 
     # LICENSE
     if structure.get('has_license', False):
         report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} LICENSE file")
     else:
         report_lines.append(f"  {Colors.RED}✗{Colors.RESET} LICENSE file")
+        report_lines.append("    💡 Tip: Add a LICENSE file (e.g., MIT, Apache) to specify usage rights.")
 
     # Tests
     if structure.get('has_tests', False):
         report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} Tests directory (tests/ or __tests__/)")
     else:
         report_lines.append(f"  {Colors.RED}✗{Colors.RESET} Tests directory (tests/ or __tests__/)")
+        report_lines.append("    💡 Tip: Add tests to ensure code reliability.")
 
     # .gitignore
     if structure.get('has_gitignore', False):
         report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} .gitignore")
     else:
         report_lines.append(f"  {Colors.RED}✗{Colors.RESET} .gitignore")
+        report_lines.append("    💡 Tip: Create a .gitignore file to exclude unwanted files from git.")
 
     report_lines.append("")
 
@@ -114,7 +118,11 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
         commit_warnings = history.get('commits_quality_warnings', [])
         if commit_warnings:
             for warning in commit_warnings:
-                report_lines.append(f"  {Colors.YELLOW}⚠{Colors.RESET} {warning}")
+                if isinstance(warning, dict):
+                    report_lines.append(f"  {Colors.YELLOW}⚠{Colors.RESET} {warning['message']}")
+                    report_lines.append(f"    💡 Tip: {warning['tip']}")
+                else:
+                    report_lines.append(f"  {Colors.YELLOW}⚠{Colors.RESET} {warning}")
         else:
             report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} No quality issues found in recent commits")
 
@@ -132,7 +140,11 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
 
         if secrets_warnings:
             for warning in secrets_warnings:
-                report_lines.append(f"  {Colors.RED}⚠{Colors.RESET} {warning}")
+                if isinstance(warning, dict):
+                    report_lines.append(f"  {Colors.RED}⚠{Colors.RESET} {warning['message']}")
+                    report_lines.append(f"    💡 Tip: {warning['tip']}")
+                else:
+                    report_lines.append(f"  {Colors.RED}⚠{Colors.RESET} {warning}")
         else:
             report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} No potential secrets found")
 
@@ -150,7 +162,11 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
         language_warnings = language.get('language_warnings', [])
         if language_warnings:
             for warning in language_warnings:
-                report_lines.append(f"  {Colors.YELLOW}⚠{Colors.RESET} {warning}")
+                if isinstance(warning, dict):
+                    report_lines.append(f"  {Colors.YELLOW}⚠{Colors.RESET} {warning['message']}")
+                    report_lines.append(f"    💡 Tip: {warning['tip']}")
+                else:
+                    report_lines.append(f"  {Colors.YELLOW}⚠{Colors.RESET} {warning}")
         else:
             report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} Language-specific checks passed")
 

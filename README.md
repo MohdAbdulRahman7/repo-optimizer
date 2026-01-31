@@ -25,6 +25,7 @@ A terminal-based tool that analyzes local git repositories and provides a health
 - **Language-Specific Checks** (optional)
   - Detects primary language (Python, JavaScript/TypeScript, Go)
   - Checks for relevant files (requirements.txt, package.json, go.mod, etc.)
+  - Provides resolution tips for failed checks
 
 - **Health Score**
   - Calculates a score out of 100 based on all checks
@@ -152,14 +153,16 @@ Issues found in enabled checks apply penalties:
 ----------------------------------------------------------------------
   📊 HEALTH SCORE
 ----------------------------------------------------------------------
-Score: 85/100 (Good)
+Score: 40/100 (Poor)
 
 ----------------------------------------------------------------------
   📁 REPOSITORY STRUCTURE
 ----------------------------------------------------------------------
   ✓ README.md
-  ✓ LICENSE file
-  ✓ Tests directory (tests/ or __tests__/)
+  ✗ LICENSE file
+    💡 Tip: Add a LICENSE file (e.g., MIT, Apache) to specify usage rights.
+  ✗ Tests directory (tests/ or __tests__/)
+    💡 Tip: Add tests to ensure code reliability.
   ✓ .gitignore
 
 ----------------------------------------------------------------------
@@ -183,7 +186,10 @@ Score: 85/100 (Good)
   💻 LANGUAGE SPECIFIC
 ----------------------------------------------------------------------
   🏷️  Primary Language: Python
-  ✓ Language-specific checks passed
+  ⚠ Python project missing dependency file (requirements.txt, pyproject.toml, or setup.py)
+    💡 Tip: Create a requirements.txt or pyproject.toml file to manage dependencies.
+  ⚠ Python project missing tests
+    💡 Tip: Add test files in a 'tests/' directory or as 'test_*.py' files.
 
 ======================================================================
 ```
@@ -196,6 +202,16 @@ The tool will exit with an error message if:
 - The path is not a git repository
 
 If git history cannot be analyzed (e.g., empty repository), the tool will still run and report available information.
+
+## Resolution Tips
+
+The tool provides actionable tips for failed checks:
+
+- **Missing LICENSE**: Add a LICENSE file to your repository root
+- **No Tests**: Create a `tests/` directory and add test files
+- **Committed node_modules**: Add `node_modules/` to your `.gitignore`
+- **Secrets in Files**: Remove sensitive data or use environment variables
+- **Bad Commit Messages**: Use descriptive commit messages (e.g., "Fix bug in login validation")
 
 ## Limitations
 

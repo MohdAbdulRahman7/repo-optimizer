@@ -79,14 +79,27 @@ def analyze_commit_quality(commits: list[str]) -> list[str]:
         # Check for bad keywords
         for keyword in bad_keywords:
             if re.search(r'\b' + re.escape(keyword) + r'\b', message):
-                warnings.append(f"Bad commit message: '{commit.strip()}' (contains '{keyword}')")
+                warnings.append({
+                    'message': f"Bad commit message: '{commit.strip()}' (contains '{keyword}')",
+                    'tip': "Use descriptive commit messages, e.g., 'Add user authentication feature'."
+                })
 
         # Check for very short messages
         if len(message) < very_short_threshold and not message.startswith('merge'):
-            warnings.append(f"Very short commit message: '{commit.strip()}'")
+            warnings.append({
+                'message': f"Very short commit message: '{commit.strip()}'",
+                'tip': "Write meaningful commit messages explaining what changed and why."
+            })
 
-    # Remove duplicates
-    return list(set(warnings))
+    # Remove duplicates based on message
+    seen = set()
+    unique_warnings = []
+    for w in warnings:
+        msg = w['message'] if isinstance(w, dict) else w
+        if msg not in seen:
+            seen.add(msg)
+            unique_warnings.append(w)
+    return unique_warnings
 
 
 def _check_tests_directory(repo_path: str) -> bool:
@@ -270,16 +283,25 @@ def analyze_security(repo_path: str) -> Dict[str, any]:
                                 value = match[1] if len(match) > 1 else match[0]
                             else:
                                 value = match
-                            results['secrets_warnings'].append(f"Potential {desc} in {file}: {value[:10]}...")
+                            results['secrets_warnings'].append({
+                                'message': f"Potential {desc} in {file}: {value[:10]}...",
+                                'tip': "Remove sensitive data from files. Use environment variables or secret management."
+                            })
             except Exception as e:
-                results['secrets_warnings'].append(f"Error scanning {file}: {str(e)}")
+                results['secrets_warnings'].append({
+                    'message': f"Error scanning {file}: {str(e)}",
+                    'tip': "Check file permissions or content."
+                })
 
     # Check for private keys in common locations
     private_key_files = ['id_rsa', 'id_ed25519', 'private.pem', 'key.pem']
     for key_file in private_key_files:
         key_path = repo / key_file
         if key_path.exists() and key_path.is_file():
-            results['secrets_warnings'].append(f"Private key file found: {key_file}")
+            results['secrets_warnings'].append({
+                'message': f"Private key file found: {key_file}",
+                'tip': "Remove private keys from repository. Use SSH agents or secure key storage."
+            })
 
     return results
 
@@ -342,19 +364,31 @@ def analyze_language_specific(repo_path: str) -> Dict[str, any]:
             has_tests = len(test_files) > 0
 
         if not (has_req or has_pyproject or has_setup):
-            results['language_warnings'].append("Python project missing dependency file (requirements.txt, pyproject.toml, or setup.py)")
+            results['language_warnings'].append({
+                'message': "Python project missing dependency file (requirements.txt, pyproject.toml, or setup.py)",
+                'tip': "Create a requirements.txt or pyproject.toml file to manage dependencies."
+            })
         if not has_tests:
-            results['language_warnings'].append("Python project missing tests")
+            results['language_warnings'].append({
+                'message': "Python project missing tests",
+                'tip': "Add test files in a 'tests/' directory or as 'test_*.py' files."
+            })
 
     elif language == 'javascript':
         # Check for package.json, scripts, and node_modules not committed
         has_package = file_exists(repo_path, 'package.json')
         if not has_package:
-            results['language_warnings'].append("JavaScript/TypeScript project missing package.json")
+            results['language_warnings'].append({
+                'message': "JavaScript/TypeScript project missing package.json",
+                'tip': "Run 'npm init' to create a package.json file."
+            })
 
         # Check if node_modules is committed (bad)
         if directory_exists(repo_path, 'node_modules'):
-            results['language_warnings'].append("node_modules directory is committed (should be in .gitignore)")
+            results['language_warnings'].append({
+                'message': "node_modules directory is committed (should be in .gitignore)",
+                'tip': "Add 'node_modules/' to your .gitignore file and remove it from git."
+            })
 
         # Check for scripts in package.json
         if has_package:
@@ -364,9 +398,15 @@ def analyze_language_specific(repo_path: str) -> Dict[str, any]:
                     pkg = json.load(f)
                     scripts = pkg.get('scripts', {})
                     if not scripts:
-                        results['language_warnings'].append("package.json has no scripts defined")
+                        results['language_warnings'].append({
+                            'message': "package.json has no scripts defined",
+                            'tip': "Add scripts to package.json, e.g., 'start', 'test', 'build'."
+                        })
             except Exception as e:
-                results['language_warnings'].append(f"Error parsing package.json: {str(e)}")
+                results['language_warnings'].append({
+                    'message': f"Error parsing package.json: {str(e)}",
+                    'tip': "Ensure package.json is valid JSON."
+                })
 
     elif language == 'go':
         # Check for go.mod, go.sum
@@ -374,9 +414,15 @@ def analyze_language_specific(repo_path: str) -> Dict[str, any]:
         has_go_sum = file_exists(repo_path, 'go.sum')
 
         if not has_go_mod:
-            results['language_warnings'].append("Go project missing go.mod")
+            results['language_warnings'].append({
+                'message': "Go project missing go.mod",
+                'tip': "Run 'go mod init <module_name>' to create go.mod."
+            })
         if not has_go_sum:
-            results['language_warnings'].append("Go project missing go.sum")
+            results['language_warnings'].append({
+                'message': "Go project missing go.sum",
+                'tip': "Run 'go mod tidy' to generate go.sum."
+            })
 
     return results
 
