@@ -70,6 +70,30 @@ Examples:
         help='Run code coverage analysis (estimates test coverage)'
     )
 
+    parser.add_argument(
+        '--verbose', '-v',
+        action='store_true',
+        help='Enable verbose output'
+    )
+
+    parser.add_argument(
+        '--quiet', '-q',
+        action='store_true',
+        help='Suppress non-essential output'
+    )
+
+    parser.add_argument(
+        '--format',
+        choices=['text', 'json', 'yaml', 'markdown'],
+        default='text',
+        help='Output format (default: text)'
+    )
+
+    parser.add_argument(
+        '--output', '-o',
+        help='Save report to file'
+    )
+
     return parser.parse_args()
 
 
@@ -91,6 +115,12 @@ def get_repo_path_and_options() -> tuple[str, dict]:
             'check_commits': args.check_commits,
             'check_security': args.check_security,
             'check_language': args.check_language,
+            'check_code_quality': args.check_code_quality,
+            'check_coverage': args.check_coverage,
+            'verbose': args.verbose,
+            'quiet': args.quiet,
+            'format': args.format,
+            'output': args.output,
         }
         return repo_path, options
     except ValueError as e:

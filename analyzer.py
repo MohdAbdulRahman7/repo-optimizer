@@ -400,7 +400,7 @@ def should_skip_for_coverage(relative_path: Path) -> bool:
     return False
 
 
-def analyze_repository(repo_path: str, options: Dict[str, bool] = None) -> Dict[str, any]:
+def analyze_repository(repo_path: str, options: Dict[str, bool] = None, verbose: bool = False, quiet: bool = False) -> Dict[str, any]:
     """
     Perform complete repository analysis.
 
@@ -414,13 +414,17 @@ def analyze_repository(repo_path: str, options: Dict[str, bool] = None) -> Dict[
     if options is None:
         options = {}
 
-    print_progress("🔍 Analyzing repository structure...", "")
+    if not quiet:
+        print_progress("🔍 Analyzing repository structure...", "")
     structure = analyze_repository_structure(repo_path)
-    print_success("Repository structure analyzed")
+    if verbose and not quiet:
+        print_success("Repository structure analyzed")
 
-    print_progress("📊 Analyzing git history...", "")
+    if not quiet:
+        print_progress("📊 Analyzing git history...", "")
     history = analyze_git_history(repo_path, options)
-    print_success("Git history analyzed")
+    if verbose and not quiet:
+        print_success("Git history analyzed")
 
     results = {
         'structure': structure,
@@ -428,28 +432,36 @@ def analyze_repository(repo_path: str, options: Dict[str, bool] = None) -> Dict[
     }
 
     if options.get('check_security', False):
-        print_progress("🔒 Scanning for security issues...", "")
+        if not quiet:
+            print_progress("🔒 Scanning for security issues...", "")
         security = analyze_security(repo_path)
         results['security'] = security
-        print_success("Security scan completed")
+        if verbose and not quiet:
+            print_success("Security scan completed")
 
     if options.get('check_language', False):
-        print_progress("💻 Analyzing language-specific requirements...", "")
+        if not quiet:
+            print_progress("💻 Analyzing language-specific requirements...", "")
         language = analyze_language_checks(repo_path)
         results['language'] = language
-        print_success("Language analysis completed")
+        if verbose and not quiet:
+            print_success("Language analysis completed")
 
     if options.get('check_code_quality', False):
-        print_progress("🔧 Analyzing code quality...", "")
+        if not quiet:
+            print_progress("🔧 Analyzing code quality...", "")
         code_quality = analyze_code_quality(repo_path)
         results['code_quality'] = code_quality
-        print_success("Code quality analysis completed")
+        if verbose and not quiet:
+            print_success("Code quality analysis completed")
 
     if options.get('check_coverage', False):
-        print_progress("📊 Analyzing code coverage...", "")
+        if not quiet:
+            print_progress("📊 Analyzing code coverage...", "")
         coverage = analyze_code_coverage(repo_path)
         results['coverage'] = coverage
-        print_success("Code coverage analysis completed")
+        if verbose and not quiet:
+            print_success("Code coverage analysis completed")
 
     return results
 

@@ -1,0 +1,79 @@
+{
+  "repository": "/testbed/repo-optimizer",
+  "analysis_date": "2026-01-31T04:59:39.886157",
+  "health_score": 15,
+  "score_category": "Critical",
+  "score_breakdown": {
+    "base_score": 60,
+    "structure": 35,
+    "history": 25,
+    "commit_quality": 0,
+    "security": 0,
+    "language_specific": 0,
+    "code_quality": 0,
+    "coverage": -45,
+    "final_score": 15
+  },
+  "results": {
+    "structure": {
+      "has_readme": true,
+      "has_license": false,
+      "has_tests": false,
+      "has_gitignore": true
+    },
+    "history": {
+      "total_commits": 8,
+      "most_recent_commit_date": "2026-01-31 04:53:15",
+      "commits_quality_warnings": []
+    },
+    "coverage": {
+      "coverage_warnings": [
+        {
+          "message": "No test file found for module 'main' (main.py)",
+          "tip": "Create a test file 'test_main.py' with test functions."
+        },
+        {
+          "message": "No test file found for module 'test_long' (test_long.py)",
+          "tip": "Create a test file 'test_test_long.py' with test functions."
+        },
+        {
+          "message": "No test file found for module 'utils' (utils.py)",
+          "tip": "Create a test file 'test_utils.py' with test functions."
+        },
+        {
+          "message": "No test file found for module 'analyzer' (analyzer.py)",
+          "tip": "Create a test file 'test_analyzer.py' with test functions."
+        },
+        {
+          "message": "No test file found for module 'scoring' (scoring.py)",
+          "tip": "Create a test file 'test_scoring.py' with test functions."
+        },
+        {
+          "message": "No test file found for module 'cli' (cli.py)",
+          "tip": "Create a test file 'test_cli.py' with test functions."
+        },
+        {
+          "message": "No test file found for module 'reporter' (reporter.py)",
+          "tip": "Create a test file 'test_reporter.py' with test functions."
+        },
+        {
+          "message": "Low function coverage: 0.0% (0/37 functions)",
+          "tip": "Aim for at least 80% function coverage. Add more unit tests."
+        },
+        {
+          "message": "Estimated low line coverage: 0.0%",
+          "tip": "Consider running actual coverage tools like coverage.py for precise measurement."
+        }
+      ],
+      "coverage_stats": {
+        "total_modules": 7,
+        "total_functions": 37,
+        "tested_functions": 0,
+        "function_coverage_pct": 0.0,
+        "total_lines": 1502,
+        "estimated_covered_lines": 0,
+        "line_coverage_est_pct": 0.0
+      }
+    }
+  }
+}

@@ -8,9 +8,9 @@ from typing import Dict
 from utils import Colors, print_header, print_score, print_success, print_warning, print_error
 
 
-def format_report(analysis_results: Dict[str, any], repo_path: str, health_score: int, score_category: str, options: Dict[str, bool] = None, score_breakdown: dict = None) -> str:
+def format_report(analysis_results: Dict[str, any], repo_path: str, health_score: int, score_category: str, options: Dict[str, bool] = None, score_breakdown: dict = None, output_format: str = 'text') -> str:
     """
-    Format analysis results into a readable terminal report.
+    Format analysis results into a report.
 
     Args:
         analysis_results: Dictionary containing analysis results
@@ -18,10 +18,73 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
         health_score: Calculated health score (0-100)
         score_category: Category of the health score
         options: Dictionary of enabled options
+        score_breakdown: Score breakdown dictionary
+        output_format: Output format ('text', 'json', 'yaml', 'markdown')
 
     Returns:
         Formatted report string
     """
+    if output_format == 'json':
+        import json
+        data = {
+            'repository': repo_path,
+            'analysis_date': datetime.now().isoformat(),
+            'health_score': health_score,
+            'score_category': score_category,
+            'score_breakdown': score_breakdown or {},
+            'results': analysis_results
+        }
+        return json.dumps(data, indent=2, default=str)
+
+    elif output_format == 'yaml':
+        try:
+            import yaml
+            data = {
+                'repository': repo_path,
+                'analysis_date': datetime.now().isoformat(),
+                'health_score': health_score,
+                'score_category': score_category,
+                'score_breakdown': score_breakdown or {},
+                'results': analysis_results
+            }
+            return yaml.dump(data, default_flow_style=False)
+        except ImportError:
+            return "YAML format requires PyYAML. Install with: pip install PyYAML"
+
+    elif output_format == 'markdown':
+        return format_markdown_report(analysis_results, repo_path, health_score, score_category, options, score_breakdown)
+
+    else:
+        return format_text_report(analysis_results, repo_path, health_score, score_category, options, score_breakdown)
+
+
+def format_markdown_report(analysis_results, repo_path, health_score, score_category, options, score_breakdown) -> str:
+    lines = [f"# Git Repository Health Checker\n"]
+    lines.append(f"**Repository:** {repo_path}")
+    lines.append(f"**Analysis Date:** {datetime.now().isoformat()}")
+    lines.append(f"**Health Score:** {health_score}/100 ({score_category})")
+    lines.append("")
+    if score_breakdown:
+        lines.append("## Score Breakdown")
+        lines.append("| Category | Score |")
+        lines.append("|----------|-------|")
+        for cat, score in score_breakdown.items():
+            if cat != 'final_score':
+                lines.append(f"| {cat.replace('_', ' ').title()} | {score:+d} |")
+        lines.append("")
+    lines.append("## Analysis Results")
+    # Add basic summary
+    structure = analysis_results.get('structure', {})
+    history = analysis_results.get('history', {})
+    lines.append(f"- **Repository Structure:** README: {'✓' if structure.get('has_readme') else '✗'}, LICENSE: {'✓' if structure.get('has_license') else '✗'}, Tests: {'✓' if structure.get('has_tests') else '✗'}")
+    lines.append(f"- **Git History:** {history.get('total_commits', 0)} commits")
+    if options.get('check_coverage'):
+        coverage = analysis_results.get('coverage', {}).get('coverage_stats', {})
+        lines.append(f"- **Code Coverage:** {coverage.get('function_coverage_pct', 0)}% functions, {coverage.get('line_coverage_est_pct', 0)}% lines estimated")
+    return "\n".join(lines)
+
+
+def format_text_report(analysis_results: Dict[str, any], repo_path: str, health_score: int, score_category: str, options: Dict[str, bool] = None, score_breakdown: dict = None) -> str:
     if options is None:
         options = {}
 
@@ -234,12 +297,13 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
     return "\n".join(report_lines)
 
 
-def print_report(report: str) -> None:
+def print_report(report: str, output_format: str = 'text') -> None:
     """
-    Print the formatted report to the terminal.
-    
+    Print or handle the formatted report.
+
     Args:
         report: Formatted report string
+        output_format: Output format
     """
     print(report)
 
