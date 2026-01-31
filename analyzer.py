@@ -295,8 +295,11 @@ def analyze_code_coverage(repo_path: str) -> Dict[str, any]:
                         test_functions.append(node.name)
 
                 if test_functions:
-                    # Match to source module
-                    source_module = test_module.replace('test_', '').replace('.test_', '.')
+                    # Match to source module: remove 'tests.' prefix and 'test_' prefix
+                    source_module = test_module
+                    if source_module.startswith('tests.'):
+                        source_module = source_module[6:]  # remove 'tests.'
+                    source_module = source_module.replace('test_', '').replace('.test_', '.')
                     test_files[source_module] = {
                         'path': relative_path,
                         'test_functions': test_functions,
@@ -378,6 +381,10 @@ def should_skip_for_coverage(relative_path: Path) -> bool:
         'migrations/',  # Database migrations
         'tests/',  # Test directories (but we handle test files separately)
     ]
+
+    # Skip test files
+    if 'test_' in path_str:
+        return True
 
     for pattern in skip_patterns:
         if pattern in path_str:
