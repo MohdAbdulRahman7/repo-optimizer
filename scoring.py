@@ -6,7 +6,7 @@ Computes a health score out of 100 based on various checks.
 from typing import Dict
 
 
-def calculate_health_score(analysis_results: Dict[str, any]) -> int:
+def calculate_health_score(analysis_results: Dict[str, any], args) -> int:
     """
     Calculate a health score out of 100 based on analysis results.
     
@@ -53,8 +53,46 @@ def calculate_health_score(analysis_results: Dict[str, any]) -> int:
         six_months_ago = datetime.now() - timedelta(days=180)
         if most_recent_date >= six_months_ago:
             score += 10
-    
-    return min(score, 100)  # Cap at 100
+
+    # Commit quality checks (if enabled)
+    if args.check_commits:
+        bad_messages = history.get('bad_commit_messages', 0)
+        short_commits = history.get('short_commits', 0)
+        # Deduct 2 points per bad message/short commit, max 20
+        penalty = min((bad_messages + short_commits) * 2, 20)
+        score -= penalty
+
+    # Security checks (if enabled)
+    if args.check_security:
+        security = analysis_results.get('security', {})
+        if security.get('has_env_files', False):
+            score -= 10  # Deduct for having .env files (potential risk)
+        potential_secrets = len(security.get('potential_secrets', []))
+        score -= min(potential_secrets * 5, 20)  # Deduct for potential secrets
+
+    # Language-specific checks (if enabled)
+    if args.check_language:
+        language = analysis_results.get('language', {})
+        lang_checks = language.get('language_checks', {})
+        if language.get('primary_language') == 'Python':
+            if lang_checks.get('has_requirements', False) or lang_checks.get('has_pyproject', False):
+                score += 10
+            if lang_checks.get('has_tests', False):
+                score += 5  # Additional for tests
+        elif language.get('primary_language') == 'JavaScript/TypeScript':
+            if lang_checks.get('has_package_json', False):
+                score += 10
+            if lang_checks.get('has_scripts_in_package', False):
+                score += 5
+            if lang_checks.get('node_modules_committed', False):
+                score -= 15  # Deduct for committed node_modules
+        elif language.get('primary_language') == 'Go':
+            if lang_checks.get('has_go_mod', False):
+                score += 10
+            if lang_checks.get('has_go_sum', False):
+                score += 5
+
+    return max(score, 0)  # Floor at 0
 
 
 def get_score_category(score: int) -> str:
