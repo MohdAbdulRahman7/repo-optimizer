@@ -30,6 +30,7 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
     security = analysis_results.get('security', {})
     language = analysis_results.get('language', {})
     code_quality = analysis_results.get('code_quality', {})
+    coverage = analysis_results.get('coverage', {})
 
     report_lines = []
 
@@ -197,6 +198,33 @@ def format_report(analysis_results: Dict[str, any], repo_path: str, health_score
                     report_lines.append(f"  {Colors.YELLOW}⚠{Colors.RESET} {warning}")
         else:
             report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} Code quality checks passed")
+
+    # Coverage (if enabled)
+    if options.get('check_coverage', False):
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}  📊 CODE COVERAGE{Colors.RESET}")
+        report_lines.append(f"{Colors.BOLD}{Colors.BLUE}{'-' * 70}{Colors.RESET}")
+
+        stats = coverage.get('coverage_stats', {})
+        if stats:
+            report_lines.append(f"  📁 Modules Analyzed: {stats.get('total_modules', 0)}")
+            report_lines.append(f"  🔧 Total Functions: {stats.get('total_functions', 0)}")
+            report_lines.append(f"  ✅ Tested Functions: {stats.get('tested_functions', 0)}")
+            report_lines.append(f"  📈 Function Coverage: {Colors.GREEN if stats.get('function_coverage_pct', 0) >= 80 else Colors.YELLOW}{stats.get('function_coverage_pct', 0)}%{Colors.RESET}")
+            report_lines.append(f"  📏 Total Lines: {stats.get('total_lines', 0)}")
+            report_lines.append(f"  📏 Estimated Covered Lines: {stats.get('estimated_covered_lines', 0)}")
+            report_lines.append(f"  📈 Estimated Line Coverage: {Colors.GREEN if stats.get('line_coverage_est_pct', 0) >= 70 else Colors.YELLOW}{stats.get('line_coverage_est_pct', 0)}%{Colors.RESET}")
+
+        coverage_warnings = coverage.get('coverage_warnings', [])
+        if coverage_warnings:
+            for warning in coverage_warnings:
+                if isinstance(warning, dict):
+                    report_lines.append(f"  {Colors.YELLOW}⚠{Colors.RESET} {warning['message']}")
+                    report_lines.append(f"    💡 Tip: {warning['tip']}")
+                else:
+                    report_lines.append(f"  {Colors.YELLOW}⚠{Colors.RESET} {warning}")
+        else:
+            report_lines.append(f"  {Colors.GREEN}✓{Colors.RESET} Code coverage analysis passed")
 
         report_lines.append("")
 

@@ -224,6 +224,182 @@ def analyze_code_quality(repo_path: str) -> Dict[str, any]:
     return results
 
 
+def analyze_code_coverage(repo_path: str) -> Dict[str, any]:
+    """Analyze code coverage by estimating test coverage."""
+    results = {
+        'coverage_warnings': [],
+        'coverage_stats': {},
+    }
+
+    language = detect_primary_language(repo_path)
+    if language != 'python':
+        results['coverage_warnings'].append({
+            'message': "Code coverage analysis only supported for Python",
+            'tip': "Coverage analysis is currently limited to Python projects."
+        })
+        return results
+
+    repo = Path(repo_path)
+    code_files = {}
+    test_files = {}
+
+    # Collect all Python files
+    for py_file in repo.rglob('*.py'):
+        if py_file.is_file():
+            relative_path = py_file.relative_to(repo)
+            module_name = str(relative_path)[:-3].replace('/', '.').replace('\\', '.')
+
+            # Skip irrelevant files
+            if should_skip_for_coverage(relative_path):
+                continue
+
+            try:
+                with open(py_file, 'r', encoding='utf-8') as f:
+                    tree = ast.parse(f.read(), filename=str(py_file))
+
+                functions = []
+                classes = []
+                lines_of_code = 0
+
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.FunctionDef) and not node.name.startswith('_'):
+                        functions.append(node.name)
+                        lines_of_code += node.end_lineno - node.lineno + 1
+                    elif isinstance(node, ast.ClassDef):
+                        classes.append(node.name)
+
+                if functions or classes:  # Only include files with functionality
+                    code_files[module_name] = {
+                        'path': relative_path,
+                        'functions': functions,
+                        'classes': classes,
+                        'lines': lines_of_code,
+                        'total_lines': sum(1 for line in open(py_file, 'r') if line.strip()),
+                    }
+            except Exception:
+                pass
+
+    # Find test files
+    for py_file in repo.rglob('test_*.py'):
+        if py_file.is_file():
+            relative_path = py_file.relative_to(repo)
+            test_module = str(relative_path)[:-3].replace('/', '.').replace('\\', '.')
+
+            try:
+                with open(py_file, 'r', encoding='utf-8') as f:
+                    tree = ast.parse(f.read(), filename=str(py_file))
+
+                test_functions = []
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
+                        test_functions.append(node.name)
+
+                if test_functions:
+                    # Match to source module
+                    source_module = test_module.replace('test_', '').replace('.test_', '.')
+                    test_files[source_module] = {
+                        'path': relative_path,
+                        'test_functions': test_functions,
+                    }
+            except Exception:
+                pass
+
+    # Analyze coverage
+    total_functions = 0
+    tested_functions = 0
+    total_lines = 0
+    covered_lines_est = 0
+
+    for module, info in code_files.items():
+        total_functions += len(info['functions'])
+        total_lines += info['lines']
+
+        if module in test_files:
+            # Simple heuristic: assume each test function covers some functions
+            test_count = len(test_files[module]['test_functions'])
+            # Estimate: each test covers 1-3 functions, but cap at actual functions
+            covered_funcs = min(test_count * 2, len(info['functions']))
+            tested_functions += covered_funcs
+            # Estimate lines covered: assume tested functions are fully covered
+            covered_lines_est += (covered_funcs / len(info['functions'])) * info['lines'] if info['functions'] else 0
+        else:
+            results['coverage_warnings'].append({
+                'message': f"No test file found for module '{module}' ({info['path']})",
+                'tip': f"Create a test file 'test_{info['path'].stem}.py' with test functions."
+            })
+
+    # Calculate percentages
+    function_coverage = (tested_functions / total_functions * 100) if total_functions else 0
+    line_coverage_est = (covered_lines_est / total_lines * 100) if total_lines else 0
+
+    results['coverage_stats'] = {
+        'total_modules': len(code_files),
+        'total_functions': total_functions,
+        'tested_functions': tested_functions,
+        'function_coverage_pct': round(function_coverage, 1),
+        'total_lines': total_lines,
+        'estimated_covered_lines': round(covered_lines_est),
+        'line_coverage_est_pct': round(line_coverage_est, 1),
+    }
+
+    # Warnings based on coverage
+    if function_coverage < 80:
+        results['coverage_warnings'].append({
+            'message': f"Low function coverage: {function_coverage:.1f}% ({tested_functions}/{total_functions} functions)",
+            'tip': "Aim for at least 80% function coverage. Add more unit tests."
+        })
+
+    if line_coverage_est < 70:
+        results['coverage_warnings'].append({
+            'message': f"Estimated low line coverage: {line_coverage_est:.1f}%",
+            'tip': "Consider running actual coverage tools like coverage.py for precise measurement."
+        })
+
+    return results
+
+
+def should_skip_for_coverage(relative_path: Path) -> bool:
+    """Determine if a file should be skipped for coverage analysis."""
+    path_str = str(relative_path)
+
+    # Skip common non-functional files
+    skip_patterns = [
+        '__init__.py',  # Often just imports
+        'setup.py',
+        'conftest.py',
+        'manage.py',
+        'wsgi.py',
+        'asgi.py',
+        'urls.py',  # Django-specific
+        'admin.py',  # Django-specific
+        'apps.py',  # Django-specific
+        'models.py',  # Often just data definitions
+        'serializers.py',  # DRF-specific
+        'migrations/',  # Database migrations
+        'tests/',  # Test directories (but we handle test files separately)
+    ]
+
+    for pattern in skip_patterns:
+        if pattern in path_str:
+            return True
+
+    # Skip if file is very small or empty
+    try:
+        with open(relative_path, 'r') as f:
+            content = f.read().strip()
+            if len(content) < 50:  # Very small files
+                return True
+            tree = ast.parse(content)
+            # Skip if only has imports and no functions/classes
+            has_code = any(isinstance(node, (ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef)) for node in ast.walk(tree))
+            if not has_code:
+                return True
+    except:
+        return True
+
+    return False
+
+
 def analyze_repository(repo_path: str, options: Dict[str, bool] = None) -> Dict[str, any]:
     """
     Perform complete repository analysis.
@@ -268,6 +444,12 @@ def analyze_repository(repo_path: str, options: Dict[str, bool] = None) -> Dict[
         code_quality = analyze_code_quality(repo_path)
         results['code_quality'] = code_quality
         print_success("Code quality analysis completed")
+
+    if options.get('check_coverage', False):
+        print_progress("📊 Analyzing code coverage...", "")
+        coverage = analyze_code_coverage(repo_path)
+        results['coverage'] = coverage
+        print_success("Code coverage analysis completed")
 
     return results
 

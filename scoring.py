@@ -23,7 +23,8 @@ def calculate_health_score(analysis_results: Dict[str, any], options: Dict[str, 
         'commit_quality': 0,
         'security': 0,
         'language_specific': 0,
-        'code_quality': 0
+        'code_quality': 0,
+        'coverage': 0
     }
 
     score = 0
@@ -99,6 +100,12 @@ def calculate_health_score(analysis_results: Dict[str, any], options: Dict[str, 
 
         breakdown['code_quality'] = -(long_penalty + circ_penalty + entropy_penalty)
         score -= (long_penalty + circ_penalty + entropy_penalty)
+
+    if options.get('check_coverage', False):
+        coverage_warnings = analysis_results.get('coverage', {}).get('coverage_warnings', [])
+        coverage_penalty = min(len(coverage_warnings) * 15, 45)  # -15 per warning, max -45
+        breakdown['coverage'] = -coverage_penalty
+        score -= coverage_penalty
 
     final_score = max(score, 0)
     breakdown['final_score'] = final_score

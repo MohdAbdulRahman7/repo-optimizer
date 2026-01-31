@@ -36,6 +36,12 @@ A terminal-based tool that analyzes local git repositories and provides a health
   - Identifies circular dependencies using directed graph analysis
   - Scans for high-entropy strings (potential hardcoded secrets)
 
+- **Code Coverage Analysis** (optional)
+  - Estimates test coverage for Python code
+  - Analyzes function and line coverage
+  - Identifies untested modules and functions
+  - Provides coverage statistics and improvement tips
+
 - **Health Score**
   - Calculates a score out of 100 based on all checks
   - Provides a category (Excellent, Good, Fair, Poor, Critical)
@@ -132,6 +138,7 @@ Issues found in enabled checks apply penalties:
   - Long functions: -5 points per (up to -20)
   - Circular dependencies: -15 points per (up to -30)
   - High-entropy secrets: -20 points per (up to -40)
+- **Code Coverage**: -15 points per warning (up to -45)
 
 ### Score Categories
 
@@ -252,6 +259,7 @@ The tool provides actionable tips for failed checks:
 - **Long Functions**: Break down into smaller, focused functions
 - **Circular Dependencies**: Refactor to eliminate import cycles
 - **High-Entropy Strings**: Replace with secure credential management
+- **Low Test Coverage**: Add unit tests for untested functions and modules
 
 ## Limitations
 

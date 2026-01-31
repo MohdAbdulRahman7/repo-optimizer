@@ -27,8 +27,9 @@ Examples:
   %(prog)s .                  # Analyze current directory (explicit, all checks)
   %(prog)s --check-commits    # Run only commit quality checks
   %(prog)s --check-security   # Run only security scan
-  %(prog)s --check-language   # Run only language-specific checks
-  %(prog)s --check-code-quality # Run only code quality checks
+  %(prog)s --check-language          # Run only language-specific checks
+  %(prog)s --check-code-quality     # Run only code quality checks
+  %(prog)s --check-coverage         # Run only code coverage analysis
         """
     )
 
@@ -61,6 +62,12 @@ Examples:
         '--check-code-quality',
         action='store_true',
         help='Run only code quality checks (long functions, circular deps, entropy)'
+    )
+
+    parser.add_argument(
+        '--check-coverage',
+        action='store_true',
+        help='Run code coverage analysis (estimates test coverage)'
     )
 
     return parser.parse_args()
